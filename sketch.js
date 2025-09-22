@@ -1,4 +1,3 @@
-
 let tempSlider;
 let stir = false;
 let stirX = 250, stirY = 200;
@@ -21,6 +20,9 @@ let soluteColors = {
 
 function setup() {
   createCanvas(700, 450);
+
+  // 设定随机种子，保证跨浏览器一致性
+  randomSeed(12345);
 
   tempSlider = createSlider(0, 100, 25);
   tempSlider.position(550, 50);
@@ -179,16 +181,35 @@ function updateParticles() {
   let stirFactor = inWater ? (stirSpeed * 0.1 + 1) : 1;
   let baseSpeed = 0.5; // 默认速度减半
 
-  // 粒子移动
+  // 粒子移动 + 边界修正
   for (let p of particles) {
     p.x += p.vx * tempFactor * stirFactor * timeFactor * baseSpeed;
     p.y += p.vy * tempFactor * stirFactor * timeFactor * baseSpeed;
 
-    if (p.x < tankX || p.x > tankX + tankW) p.vx *= -1;
-    if (p.y < tankY + tankH - waterLevel || p.y > tankY + tankH) p.vy *= -1;
+    // 左右边界
+    if (p.x < tankX) {
+      p.x = tankX;
+      p.vx *= -1;
+    }
+    if (p.x > tankX + tankW) {
+      p.x = tankX + tankW;
+      p.vx *= -1;
+    }
+
+    // 上下边界（水面到槽底）
+    let waterTop = tankY + tankH - waterLevel;
+    let waterBottom = tankY + tankH;
+    if (p.y < waterTop) {
+      p.y = waterTop;
+      p.vy *= -1;
+    }
+    if (p.y > waterBottom) {
+      p.y = waterBottom;
+      p.vy *= -1;
+    }
   }
 
-  // 粒子间碰撞（速度不变，方向相反）
+  // 粒子间碰撞（简单反弹）
   for (let i = 0; i < particles.length; i++) {
     for (let j = i + 1; j < particles.length; j++) {
       let p1 = particles[i];
@@ -233,4 +254,3 @@ function mouseDragged() {
 function mouseReleased() {
   stir = false;
 }
-
