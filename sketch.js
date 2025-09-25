@@ -237,12 +237,12 @@ function updateParticles() {
   stirSpeed *= 0.95;
 }
 
+// ---- 鼠标事件 ----
 function mousePressed() {
   if (dist(mouseX, mouseY, stirX, stirY) < 40) {
     stir = true;
   }
 }
-
 function mouseDragged() {
   if (stir) {
     stirX = constrain(mouseX, 0, width);
@@ -250,7 +250,26 @@ function mouseDragged() {
     stirSpeed = abs(movedX) + abs(movedY);
   }
 }
-
 function mouseReleased() {
   stir = false;
+}
+
+// ---- 触摸事件 ----
+function touchStarted() {
+  if (dist(touchX, touchY, stirX, stirY) < 40) {
+    stir = true;
+  }
+  return false; // 阻止页面滚动
+}
+function touchMoved() {
+  if (stir) {
+    stirX = constrain(touchX, 0, width);
+    stirY = constrain(touchY, 0, height);
+    stirSpeed = abs(movedX) + abs(movedY);
+  }
+  return false;
+}
+function touchEnded() {
+  stir = false;
+  return false;
 }
