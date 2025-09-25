@@ -1,4 +1,3 @@
-
 let tempSlider;
 let stir = false;
 let stirX = 250, stirY = 200;
@@ -10,8 +9,8 @@ let hasWater = false;
 let soluteType = "none";
 let addWaterBtn, soluteMenu, speedBtn, resetBtn;
 
-let timeFactor = 1; // 时间加速因子
-let tankX = 100, tankY = 100, tankW = 400, tankH = 200; // 水池区域
+let timeFactor = 1;
+let tankX = 100, tankY = 100, tankW = 400, tankH = 200; 
 let canvas;
 
 let soluteColors = {
@@ -220,55 +219,48 @@ function updateParticles() {
   stirSpeed *= 0.95;
 }
 
-/* -------- 事件逻辑 -------- */
-function pointerPressed(px, py) {
-  if (isInTank(px, py) && dist(px, py, stirX, stirY) < 40) {
+/* -------- 鼠标事件 -------- */
+function mousePressed() {
+  if (isInTank(mouseX, mouseY) && dist(mouseX, mouseY, stirX, stirY) < 40) {
     stir = true;
   }
 }
-
-function pointerDragged(px, py) {
+function mouseDragged() {
   if (stir) {
-    stirX = constrain(px, tankX, tankX + tankW);
-    stirY = constrain(py, tankY, tankY + tankH);
+    stirX = constrain(mouseX, tankX, tankX + tankW);
+    stirY = constrain(mouseY, tankY, tankY + tankH);
     stirSpeed = abs(movedX) + abs(movedY);
   }
 }
+function mouseReleased() { stir = false; }
 
-function pointerReleased() {
-  stir = false;
-}
-
-function mousePressed() { pointerPressed(mouseX, mouseY); }
-function mouseDragged() { pointerDragged(mouseX, mouseY); }
-function mouseReleased() { pointerReleased(); }
-
+/* -------- 触摸事件 -------- */
 function touchStarted() {
-  if (isInTank(touchX, touchY)) {
-    pointerPressed(mouseX, mouseY);
-    if (stir) return false;
+  if (isInTank(touchX, touchY) && dist(touchX, touchY, stirX, stirY) < 40) {
+    stir = true;
+    return false; // 阻止默认，仅在水池区域
   }
-  return true;
+  return true; // 放行 → 保证按钮/滑条可用
 }
 
 function touchMoved() {
-  if (isInTank(touchX, touchY)) {
-    pointerDragged(mouseX, mouseY);
-    if (stir) return false;
+  if (stir) {
+    stirX = constrain(touchX, tankX, tankX + tankW);
+    stirY = constrain(touchY, tankY, tankY + tankH);
+    stirSpeed = abs(movedX) + abs(movedY);
+    return false; // 只在拖棒时阻止
   }
-  return true;
+  return true; // 放行
 }
 
 function touchEnded() {
-  if (isInTank(touchX, touchY)) {
-    pointerReleased();
-    if (stir) return false;
-  }
-  return true;
+  stir = false;
+  return true; // 放行
 }
 
-// 判断触点是否在水池区域
+// 判断是否在水池区域
 function isInTank(px, py) {
   return (px >= tankX && px <= tankX + tankW &&
           py >= tankY && py <= tankY + tankH);
 }
+
