@@ -21,6 +21,11 @@ let soluteColors = {
 function setup() {
   createCanvas(700, 450);
 
+  // 禁止触摸时滚动页面
+  document.body.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
+  document.body.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+  document.body.addEventListener("touchend", e => e.preventDefault(), { passive: false });
+
   // 设定随机种子，保证跨浏览器一致性
   randomSeed(12345);
 
@@ -237,39 +242,32 @@ function updateParticles() {
   stirSpeed *= 0.95;
 }
 
-// ---- 鼠标事件 ----
-function mousePressed() {
-  if (dist(mouseX, mouseY, stirX, stirY) < 40) {
+// =================== 统一的交互 ===================
+function pointerPressed(px, py) {
+  if (dist(px, py, stirX, stirY) < 40) {
     stir = true;
   }
 }
-function mouseDragged() {
+
+function pointerDragged(px, py) {
   if (stir) {
-    stirX = constrain(mouseX, 0, width);
-    stirY = constrain(mouseY, 0, height);
+    stirX = constrain(px, 0, width);
+    stirY = constrain(py, 0, height);
     stirSpeed = abs(movedX) + abs(movedY);
   }
 }
-function mouseReleased() {
+
+function pointerReleased() {
   stir = false;
 }
 
+// ---- 鼠标事件 ----
+function mousePressed() { pointerPressed(mouseX, mouseY); }
+function mouseDragged() { pointerDragged(mouseX, mouseY); }
+function mouseReleased() { pointerReleased(); }
+
 // ---- 触摸事件 ----
-function touchStarted() {
-  if (dist(touchX, touchY, stirX, stirY) < 40) {
-    stir = true;
-  }
-  return false; // 阻止页面滚动
-}
-function touchMoved() {
-  if (stir) {
-    stirX = constrain(touchX, 0, width);
-    stirY = constrain(touchY, 0, height);
-    stirSpeed = abs(movedX) + abs(movedY);
-  }
-  return false;
-}
-function touchEnded() {
-  stir = false;
-  return false;
-}
+function touchStarted() { pointerPressed(mouseX, mouseY); return false; }
+function touchMoved() { pointerDragged(mouseX, mouseY); return false; }
+function touchEnded() { pointerReleased(); return false; }
+
