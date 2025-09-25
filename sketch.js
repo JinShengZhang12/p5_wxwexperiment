@@ -11,6 +11,7 @@ let addWaterBtn, soluteMenu, speedBtn, resetBtn;
 
 let timeFactor = 1; // 时间加速因子
 let tankX = 100, tankY = 100, tankW = 400, tankH = 200; // 加宽后的玻璃槽尺寸
+let canvas;
 
 let soluteColors = {
   salt: [255, 255, 255],
@@ -19,7 +20,7 @@ let soluteColors = {
 };
 
 function setup() {
-  createCanvas(700, 450);
+  canvas = createCanvas(700, 450);
 
   // 设定随机种子，保证跨浏览器一致性
   randomSeed(12345);
@@ -80,7 +81,7 @@ function draw() {
   drawStirRod();
   drawTempControl();
   drawMenuLabels();
-
+  
   if (hasWater && waterLevel > 0) {
     fill(150, 200, 255, 100);
     noStroke();
@@ -185,31 +186,18 @@ function updateParticles() {
     p.x += p.vx * tempFactor * stirFactor * timeFactor * baseSpeed;
     p.y += p.vy * tempFactor * stirFactor * timeFactor * baseSpeed;
 
-    if (p.x < tankX) {
-      p.x = tankX;
-      p.vx *= -1;
-    }
-    if (p.x > tankX + tankW) {
-      p.x = tankX + tankW;
-      p.vx *= -1;
-    }
+    if (p.x < tankX) { p.x = tankX; p.vx *= -1; }
+    if (p.x > tankX + tankW) { p.x = tankX + tankW; p.vx *= -1; }
 
     let waterTop = tankY + tankH - waterLevel;
     let waterBottom = tankY + tankH;
-    if (p.y < waterTop) {
-      p.y = waterTop;
-      p.vy *= -1;
-    }
-    if (p.y > waterBottom) {
-      p.y = waterBottom;
-      p.vy *= -1;
-    }
+    if (p.y < waterTop) { p.y = waterTop; p.vy *= -1; }
+    if (p.y > waterBottom) { p.y = waterBottom; p.vy *= -1; }
   }
 
   for (let i = 0; i < particles.length; i++) {
     for (let j = i + 1; j < particles.length; j++) {
-      let p1 = particles[i];
-      let p2 = particles[j];
+      let p1 = particles[i], p2 = particles[j];
       let dx = p1.x - p2.x;
       let dy = p1.y - p2.y;
       let distSq = dx * dx + dy * dy;
@@ -233,7 +221,7 @@ function updateParticles() {
   stirSpeed *= 0.95;
 }
 
-/* ---------- 鼠标/触摸 统一控制 ---------- */
+/* ---- 公用事件逻辑 ---- */
 function pointerPressed(px, py) {
   if (dist(px, py, stirX, stirY) < 40) {
     stir = true;
@@ -252,21 +240,38 @@ function pointerReleased() {
   stir = false;
 }
 
-/* 鼠标事件 */
+/* ---- 鼠标事件 ---- */
 function mousePressed() { pointerPressed(mouseX, mouseY); }
 function mouseDragged() { pointerDragged(mouseX, mouseY); }
 function mouseReleased() { pointerReleased(); }
 
-/* 触摸事件 */
+/* ---- 触摸事件 ---- */
 function touchStarted() {
-  pointerPressed(mouseX, mouseY);
-  if (stir) return false; // 只在拖玻璃棒时阻止浏览器默认行为
+  if (isInCanvas()) {
+    pointerPressed(mouseX, mouseY);
+    if (stir) return false;
+  }
+  return true;
 }
+
 function touchMoved() {
-  pointerDragged(mouseX, mouseY);
-  if (stir) return false;
+  if (isInCanvas()) {
+    pointerDragged(mouseX, mouseY);
+    if (stir) return false;
+  }
+  return true;
 }
+
 function touchEnded() {
-  pointerReleased();
-  if (stir) return false;
+  if (isInCanvas()) {
+    pointerReleased();
+    if (stir) return false;
+  }
+  return true;
+}
+
+function isInCanvas() {
+  let rect = canvas.elt.getBoundingClientRect();
+  return (mouseX >= 0 && mouseX <= rect.width &&
+          mouseY >= 0 && mouseY <= rect.height);
 }
