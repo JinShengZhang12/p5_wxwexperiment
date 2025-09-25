@@ -21,11 +21,6 @@ let soluteColors = {
 function setup() {
   createCanvas(700, 450);
 
-  // 禁止触摸时滚动页面
-  document.body.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
-  document.body.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
-  document.body.addEventListener("touchend", e => e.preventDefault(), { passive: false });
-
   // 设定随机种子，保证跨浏览器一致性
   randomSeed(12345);
 
@@ -85,7 +80,7 @@ function draw() {
   drawStirRod();
   drawTempControl();
   drawMenuLabels();
-  
+
   if (hasWater && waterLevel > 0) {
     fill(150, 200, 255, 100);
     noStroke();
@@ -186,12 +181,10 @@ function updateParticles() {
   let stirFactor = inWater ? (stirSpeed * 0.1 + 1) : 1;
   let baseSpeed = 0.5; // 默认速度减半
 
-  // 粒子移动 + 边界修正
   for (let p of particles) {
     p.x += p.vx * tempFactor * stirFactor * timeFactor * baseSpeed;
     p.y += p.vy * tempFactor * stirFactor * timeFactor * baseSpeed;
 
-    // 左右边界
     if (p.x < tankX) {
       p.x = tankX;
       p.vx *= -1;
@@ -201,7 +194,6 @@ function updateParticles() {
       p.vx *= -1;
     }
 
-    // 上下边界（水面到槽底）
     let waterTop = tankY + tankH - waterLevel;
     let waterBottom = tankY + tankH;
     if (p.y < waterTop) {
@@ -214,7 +206,6 @@ function updateParticles() {
     }
   }
 
-  // 粒子间碰撞（简单反弹）
   for (let i = 0; i < particles.length; i++) {
     for (let j = i + 1; j < particles.length; j++) {
       let p1 = particles[i];
@@ -242,7 +233,7 @@ function updateParticles() {
   stirSpeed *= 0.95;
 }
 
-// =================== 统一的交互 ===================
+/* ---------- 鼠标/触摸 统一控制 ---------- */
 function pointerPressed(px, py) {
   if (dist(px, py, stirX, stirY) < 40) {
     stir = true;
@@ -261,13 +252,21 @@ function pointerReleased() {
   stir = false;
 }
 
-// ---- 鼠标事件 ----
+/* 鼠标事件 */
 function mousePressed() { pointerPressed(mouseX, mouseY); }
 function mouseDragged() { pointerDragged(mouseX, mouseY); }
 function mouseReleased() { pointerReleased(); }
 
-// ---- 触摸事件 ----
-function touchStarted() { pointerPressed(mouseX, mouseY); return false; }
-function touchMoved() { pointerDragged(mouseX, mouseY); return false; }
-function touchEnded() { pointerReleased(); return false; }
-
+/* 触摸事件 */
+function touchStarted() {
+  pointerPressed(mouseX, mouseY);
+  if (stir) return false; // 只在拖玻璃棒时阻止浏览器默认行为
+}
+function touchMoved() {
+  pointerDragged(mouseX, mouseY);
+  if (stir) return false;
+}
+function touchEnded() {
+  pointerReleased();
+  if (stir) return false;
+}
