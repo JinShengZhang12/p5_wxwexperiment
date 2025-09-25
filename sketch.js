@@ -1,3 +1,4 @@
+
 let tempSlider;
 let stir = false;
 let stirX = 250, stirY = 200;
@@ -10,7 +11,7 @@ let soluteType = "none";
 let addWaterBtn, soluteMenu, speedBtn, resetBtn;
 
 let timeFactor = 1; // 时间加速因子
-let tankX = 100, tankY = 100, tankW = 400, tankH = 200; // 加宽后的玻璃槽尺寸
+let tankX = 100, tankY = 100, tankW = 400, tankH = 200; // 水池区域
 let canvas;
 
 let soluteColors = {
@@ -21,8 +22,6 @@ let soluteColors = {
 
 function setup() {
   canvas = createCanvas(700, 450);
-
-  // 设定随机种子，保证跨浏览器一致性
   randomSeed(12345);
 
   tempSlider = createSlider(0, 100, 25);
@@ -128,7 +127,7 @@ function drawGlassTank() {
 
 function drawWaterPipe() {
   stroke(180);
-  fill(255); // 白色塑料管
+  fill(255);
   rect(tankX - 30, tankY - 40, 30, 20, 3);
   rect(tankX - 10, tankY - 40, 10, 40, 3);
   fill(200);
@@ -180,7 +179,7 @@ function updateParticles() {
   let tempFactor = map(tempSlider.value(), 0, 100, 0.3, 2);
   let inWater = stirX > tankX && stirX < (tankX + tankW) && stirY > (tankY + tankH - waterLevel) && stirY < (tankY + tankH);
   let stirFactor = inWater ? (stirSpeed * 0.1 + 1) : 1;
-  let baseSpeed = 0.5; // 默认速度减半
+  let baseSpeed = 0.5;
 
   for (let p of particles) {
     p.x += p.vx * tempFactor * stirFactor * timeFactor * baseSpeed;
@@ -221,17 +220,17 @@ function updateParticles() {
   stirSpeed *= 0.95;
 }
 
-/* ---- 公用事件逻辑 ---- */
+/* -------- 事件逻辑 -------- */
 function pointerPressed(px, py) {
-  if (dist(px, py, stirX, stirY) < 40) {
+  if (isInTank(px, py) && dist(px, py, stirX, stirY) < 40) {
     stir = true;
   }
 }
 
 function pointerDragged(px, py) {
   if (stir) {
-    stirX = constrain(px, 0, width);
-    stirY = constrain(py, 0, height);
+    stirX = constrain(px, tankX, tankX + tankW);
+    stirY = constrain(py, tankY, tankY + tankH);
     stirSpeed = abs(movedX) + abs(movedY);
   }
 }
@@ -240,14 +239,12 @@ function pointerReleased() {
   stir = false;
 }
 
-/* ---- 鼠标事件 ---- */
 function mousePressed() { pointerPressed(mouseX, mouseY); }
 function mouseDragged() { pointerDragged(mouseX, mouseY); }
 function mouseReleased() { pointerReleased(); }
 
-/* ---- 触摸事件 ---- */
 function touchStarted() {
-  if (isInCanvas()) {
+  if (isInTank(touchX, touchY)) {
     pointerPressed(mouseX, mouseY);
     if (stir) return false;
   }
@@ -255,7 +252,7 @@ function touchStarted() {
 }
 
 function touchMoved() {
-  if (isInCanvas()) {
+  if (isInTank(touchX, touchY)) {
     pointerDragged(mouseX, mouseY);
     if (stir) return false;
   }
@@ -263,15 +260,15 @@ function touchMoved() {
 }
 
 function touchEnded() {
-  if (isInCanvas()) {
+  if (isInTank(touchX, touchY)) {
     pointerReleased();
     if (stir) return false;
   }
   return true;
 }
 
-function isInCanvas() {
-  let rect = canvas.elt.getBoundingClientRect();
-  return (mouseX >= 0 && mouseX <= rect.width &&
-          mouseY >= 0 && mouseY <= rect.height);
+// 判断触点是否在水池区域
+function isInTank(px, py) {
+  return (px >= tankX && px <= tankX + tankW &&
+          py >= tankY && py <= tankY + tankH);
 }
