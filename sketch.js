@@ -10,7 +10,7 @@ let soluteType = "none";
 let addWaterBtn, soluteMenu, speedBtn, resetBtn;
 
 let timeFactor = 1;
-let tankX = 100, tankY = 100, tankW = 400, tankH = 200; 
+let tankX = 100, tankY = 100, tankW = 400, tankH = 200;
 let canvas;
 
 let soluteColors = {
@@ -22,6 +22,9 @@ let soluteColors = {
 function setup() {
   canvas = createCanvas(700, 450);
   randomSeed(12345);
+
+  // ✅ 禁止浏览器在画布上滚动或放大缩小
+  canvas.elt.style.touchAction = 'none';
 
   tempSlider = createSlider(0, 100, 25);
   tempSlider.position(550, 50);
@@ -79,7 +82,7 @@ function draw() {
   drawStirRod();
   drawTempControl();
   drawMenuLabels();
-  
+
   if (hasWater && waterLevel > 0) {
     fill(150, 200, 255, 100);
     noStroke();
@@ -234,28 +237,38 @@ function mouseDragged() {
 }
 function mouseReleased() { stir = false; }
 
-/* -------- 触摸事件 -------- */
+/* -------- 触摸事件（✅ 平板优化版） -------- */
+function getTouchPos() {
+  if (touches.length > 0) {
+    return { x: touches[0].x, y: touches[0].y };
+  } else {
+    return { x: mouseX, y: mouseY };
+  }
+}
+
 function touchStarted() {
-  if (isInTank(touchX, touchY) && dist(touchX, touchY, stirX, stirY) < 40) {
+  let pos = getTouchPos();
+  if (isInTank(pos.x, pos.y) && dist(pos.x, pos.y, stirX, stirY) < 40) {
     stir = true;
     return false; // 阻止默认，仅在水池区域
   }
-  return true; // 放行 → 保证按钮/滑条可用
+  return true; // 放行按钮、滑条
 }
 
 function touchMoved() {
+  let pos = getTouchPos();
   if (stir) {
-    stirX = constrain(touchX, tankX, tankX + tankW);
-    stirY = constrain(touchY, tankY, tankY + tankH);
+    stirX = constrain(pos.x, tankX, tankX + tankW);
+    stirY = constrain(pos.y, tankY, tankY + tankH);
     stirSpeed = abs(movedX) + abs(movedY);
-    return false; // 只在拖棒时阻止
+    return false; // 拖棒时阻止默认行为
   }
-  return true; // 放行
+  return true;
 }
 
 function touchEnded() {
   stir = false;
-  return true; // 放行
+  return true;
 }
 
 // 判断是否在水池区域
@@ -263,4 +276,5 @@ function isInTank(px, py) {
   return (px >= tankX && px <= tankX + tankW &&
           py >= tankY && py <= tankY + tankH);
 }
+
 
